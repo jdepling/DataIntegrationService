@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Integration.Api/Integration.Api.csproj" />
+    <Project Path="Integration.Contracts/Integration.Contracts.csproj" />
+    <Project Path="Integration.Data/Integration.Data.csproj" Id="0291183e-6c88-4166-8e75-d9742f40de5c" />
+    <Project Path="Integration.OutboxPublisher/Integration.OutboxPublisher.csproj" />
+    <Project Path="Integration.Worker/Integration.Worker.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Integration.Api.Tests/Integration.Api.Tests.csproj" />
+  </Folder>
+</Solution>

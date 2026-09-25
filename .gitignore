@@ -1,0 +1,46 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+**/bin/
+**/obj/
+
+# Test results
+TestResults/
+*.trx
+
+# NuGet
+**/packages/
+*.nupkg
+*.snupkg
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.env
+
+# Local database / development files
+*.mdf
+*.ldf
+
+# User-specific secrets
+secrets.json
+appsettings.Local.json
+appsettings.Development.local.json
