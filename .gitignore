@@ -44,3 +44,6 @@ Thumbs.db
 secrets.json
 appsettings.Local.json
 appsettings.Development.local.json
+.env
+.env.*
+!.env.example

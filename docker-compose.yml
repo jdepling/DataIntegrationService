@@ -8,7 +8,7 @@ services:
       - "5252:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;
+      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: Integration.OutboxPublisher/Dockerfile
     environment:
-      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;
+      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
       - RabbitMq__Host=rabbitmq
     depends_on:
       migration:
@@ -30,11 +30,11 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrongPassword123!"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
     ports:
       - "1433:1433"
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrongPassword123!' -C -Q 'SELECT 1 FROM DataIntegrationService.sys.tables' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${SA_PASSWORD}' -C -Q 'SELECT 1' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -76,7 +76,7 @@ services:
       context: .
       dockerfile: Integration.Api/Dockerfile.migrations
     environment:
-      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;
+      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
     depends_on:
       sqlserver:
         condition: service_healthy

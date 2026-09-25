@@ -1,137 +1,58 @@
 # DataIntegrationService
 
-A .NET 8 proof-of-concept for building a resilient data integration service using an **Outbox Pattern**, **RabbitMQ**, and background workers.
+A .NET 8 proof-of-concept for reliable data integration using an **Outbox Pattern**, **RabbitMQ**, and background workers.
 
-The goal of this project is to explore reliable message delivery between systems while keeping the integration service resilient to failures.
+The flow is:
 
-## Architecture
+**API → SQL Outbox → Outbox Publisher → RabbitMQ → Worker**
 
-```text
-System A
-   │
-   │ HTTP POST
-   ▼
-Integration API
-   │
-   │ Save message
-   ▼
-SQL Outbox
-   │
-   │ Poll
-   ▼
-Outbox Publisher
-   │
-   │ Publish
-   ▼
-RabbitMQ
-   │
-   │ Consume
-   ▼
-Integration Worker
-   │
-   │ HTTP
-   ▼
-System B
+## Configuration
+
+Create a `.env` file in the solution root:
+
+```env
+SA_PASSWORD=YourStrongPassword123!
+RABBITMQ_USERNAME=admin
+RABBITMQ_PASSWORD=admin
 ```
 
-## Projects
+These credentials are used by the Docker containers.
 
-* **Integration.Api** — Receives integration requests and stores them in the SQL outbox.
-* **Integration.Data** — Shared Entity Framework Core models and database context.
-* **Integration.OutboxPublisher** — Polls unpublished outbox messages and publishes them to RabbitMQ.
-* **Integration.Worker** — Consumes RabbitMQ messages and will ultimately deliver them to System B.
+> **Note:** `.env` is ignored by Git. Do not commit real credentials.
 
-## Technologies
+## Run
 
-* .NET 8
-* C#
-* ASP.NET Core Web API
-* Entity Framework Core
-* SQL Server
-* RabbitMQ
-* Docker / Docker Compose
-* Swagger / OpenAPI
+Make sure Docker Desktop is running, then from the solution directory:
 
-## Key Concepts
-
-### Outbox Pattern
-
-The API stores the incoming message in SQL before returning `202 Accepted`.
-
-This prevents a situation where the API successfully accepts a request but the message is lost because RabbitMQ is unavailable.
-
-The Outbox Publisher periodically looks for messages that have not yet been published and sends them to RabbitMQ.
-
-### At-Least-Once Delivery
-
-The publisher marks an outbox message as published only after successfully publishing it to RabbitMQ.
-
-If the publisher fails after publishing but before updating SQL, the message can be published again.
-
-The planned solution is for System B to use an idempotency key such as `SourceId` so duplicate messages can be safely handled.
-
-### Docker Compose
-
-The entire application can be started with:
-
-```bash
+```powershell
 docker compose up -d --build
 ```
 
-Docker Compose starts:
+Check that everything is running:
 
-* SQL Server
-* Database migration
-* RabbitMQ
-* Integration API
-* Outbox Publisher
-* Integration Worker
-
-The migration service automatically applies Entity Framework Core migrations when starting from a new database.
-
-## Running the Application
-
-Start the application:
-
-```bash
-docker compose up -d --build
-```
-
-Check the services:
-
-```bash
+```powershell
 docker compose ps
 ```
 
-The migration container is a one-time process and should show:
+To also see the completed migration container:
 
-```text
-Exited (0)
+```powershell
+docker compose ps -a
 ```
 
-View logs:
+The migration container should show `Exited (0)`.
 
-```bash
-docker compose logs worker
-```
+## Test
 
-```bash
-docker compose logs outbox-publisher
-```
+Open Swagger:
 
-## Swagger
-
-Once the application is running, open:
-
-```text
 http://localhost:5252/swagger
-```
 
-Example request:
+POST a message using:
 
 ```json
 {
-  "sourceId": "TEST-001",
+  "sourceId": "TEST-DOCKER-001",
   "data": {
     "customerId": 12345,
     "name": "John Smith",
@@ -141,58 +62,36 @@ Example request:
 }
 ```
 
-The API should return `202 Accepted`.
+The API should return **202 Accepted**.
 
-The message will then travel through:
+## See the Worker Receive the Message
 
-```text
-API → SQL Outbox → Outbox Publisher → RabbitMQ → Worker
+Run:
+
+```powershell
+docker compose logs -f worker
 ```
 
-## RabbitMQ Management UI
-
-RabbitMQ's management interface is available at:
+You should see something like:
 
 ```text
-http://localhost:15672
+Worker is listening for messages...
+Received: {
+    "customerId": 12345,
+    "name": "John Smith",
+    "amount": 99.95,
+    "status": "Created"
+}
 ```
 
-The local development credentials are:
+## Stop
 
-```text
-Username: admin
-Password: admin
-```
-
-## Resetting the Environment
-
-To stop the application:
-
-```bash
+```powershell
 docker compose down
 ```
 
-To completely reset the development environment, including the SQL Server and RabbitMQ data:
+To completely reset the environment, including SQL Server and RabbitMQ data:
 
-```bash
+```powershell
 docker compose down -v
 ```
-
-The next:
-
-```bash
-docker compose up -d --build
-```
-
-will recreate the database and apply the EF Core migrations.
-
-## Current Status
-
-The current POC demonstrates:
-
-* HTTP API receiving integration messages
-* SQL Outbox persistence
-* Background outbox publishing
-* RabbitMQ messaging
-* Background message consumption
-* Dockerized deve
