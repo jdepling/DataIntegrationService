@@ -1,7 +1,10 @@
 using System.Text;
+using Integration.Worker.Services;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Microsoft.Extensions.Options;
+using System.Text.Json;
+using Integration.Worker.Models;
 
 namespace Integration.Worker
 {
@@ -9,11 +12,13 @@ namespace Integration.Worker
     {
         private readonly ILogger<Worker> _logger;
         private readonly RabbitMqOptions _rabbitMqOptions;
+        private readonly ISystemBClient _systemBClient;
 
-        public Worker(IOptions<RabbitMqOptions> rabbitMqOptions, ILogger<Worker> logger)
+        public Worker(IOptions<RabbitMqOptions> rabbitMqOptions, ISystemBClient systemBClient, ILogger<Worker> logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger          = logger ?? throw new ArgumentNullException(nameof(logger));
             _rabbitMqOptions = rabbitMqOptions.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
+            _systemBClient   = systemBClient ?? throw new ArgumentNullException(nameof(systemBClient));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,15 +38,67 @@ namespace Integration.Worker
 
             consumer.ReceivedAsync += async (sender, args) =>
             {
-                var body = args.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
+                try
+                {
+                    var body = args.Body.ToArray();
+                    var messageJson = Encoding.UTF8.GetString(body);
 
-                _logger.LogInformation($"Received: {message}");
+                    var integrationMessage =
+                        JsonSerializer.Deserialize<IntegrationMessage>(messageJson);
 
-                // Pretend we successfully processed the message.
-                await channel.BasicAckAsync(
-                    deliveryTag: args.DeliveryTag,
-                    multiple: false);
+                    _logger.LogInformation(
+                        "Raw RabbitMQ message: {MessageJson}",
+                        messageJson);
+
+                    _logger.LogInformation(
+                        "SourceId: {SourceId}, Data kind: {DataKind}, Data: {Data}",
+                        integrationMessage.SourceId,
+                        integrationMessage.Data.ValueKind,
+                        integrationMessage.Data);
+
+                    if (integrationMessage == null)
+                    {
+                        throw new InvalidOperationException(
+                            "Unable to deserialize integration message.");
+                    }
+
+                    var systemBRequest = new SystemBMessageRequest
+                    {
+                        SourceId = integrationMessage.SourceId,
+                        CustomerId = integrationMessage.Data
+                            .GetProperty("customerId")
+                            .GetInt32(),
+                        Name = integrationMessage.Data
+                            .GetProperty("name")
+                            .GetString() ?? string.Empty,
+                        Amount = integrationMessage.Data
+                            .GetProperty("amount")
+                            .GetDecimal(),
+                        Status = integrationMessage.Data
+                            .GetProperty("status")
+                            .GetString() ?? string.Empty
+                    };
+
+                    _logger.LogInformation("System B request: {Request}", JsonSerializer.Serialize(systemBRequest));
+
+                    await _systemBClient.SendAsync(
+                        systemBRequest,
+                        stoppingToken);
+
+                    await channel.BasicAckAsync(
+                        deliveryTag: args.DeliveryTag,
+                        multiple: false);
+
+                    _logger.LogInformation(
+                        "Message {SourceId} successfully sent to System B.",
+                        integrationMessage.SourceId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Error processing RabbitMQ message.");
+                }
             };
 
             await channel.BasicConsumeAsync(

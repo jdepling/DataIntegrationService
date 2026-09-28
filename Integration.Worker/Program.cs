@@ -1,3 +1,5 @@
+using Integration.Worker.Services;
+
 namespace Integration.Worker
 {
     public class Program
@@ -8,6 +10,13 @@ namespace Integration.Worker
             builder.Services.Configure<RabbitMqOptions>(
             builder.Configuration.GetSection("RabbitMq"));
             builder.Services.AddHostedService<Worker>();
+            builder.Services.AddHttpClient<ISystemBClient, SystemBClient>((serviceProvider, client) =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+                client.BaseAddress = new Uri(
+                    configuration["SystemB:BaseUrl"]!);
+            });
 
             var host = builder.Build();
             host.Run();

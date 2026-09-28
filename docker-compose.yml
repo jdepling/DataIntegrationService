@@ -65,6 +65,7 @@ services:
       dockerfile: Integration.Worker/Dockerfile
     environment:
       - RabbitMq__Host=rabbitmq
+      - SystemB__BaseUrl=http://system-b:8080/
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -80,6 +81,30 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+  
+  system-b:
+    build:
+      context: .
+      dockerfile: Integration.SystemB/Dockerfile
+    ports:
+      - "5080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__SystemBDatabase=Server=sqlserver,1433;Database=SystemB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+    depends_on:
+      system-b-migration:
+        condition: service_completed_successfully
+
+  system-b-migration:
+    build:
+      context: .
+      dockerfile: Integration.SystemB/Dockerfile.migrations
+    environment:
+      - ConnectionStrings__SystemBDatabase=Server=sqlserver,1433;Database=SystemB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
 
 volumes:
   rabbitmq_data:

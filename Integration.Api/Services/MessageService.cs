@@ -1,4 +1,5 @@
-﻿using Integration.Data;
+﻿using System.Text.Json;
+using Integration.Data;
 
 namespace Integration.Api.Services
 {
@@ -15,7 +16,7 @@ namespace Integration.Api.Services
             {
                 Id = Guid.NewGuid(),
                 SourceId = request.SourceId,
-                Payload = request.Data.GetRawText(),
+                Payload = JsonSerializer.Serialize(request),
                 CreatedAt = DateTime.UtcNow
             };
             _dbContext.OutboxMessages.Add(message);
