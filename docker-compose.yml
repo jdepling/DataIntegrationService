@@ -64,6 +64,7 @@ services:
       context: .
       dockerfile: Integration.Worker/Dockerfile
     environment:
+      - ConnectionStrings__IntegrationDatabase=Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
       - RabbitMq__Host=rabbitmq
       - SystemB__BaseUrl=http://system-b:8080/
     depends_on:

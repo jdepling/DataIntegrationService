@@ -10,5 +10,6 @@
         }
 
         public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+        public DbSet<FailedMessage> FailedMessages { get; set; }
     }
 }

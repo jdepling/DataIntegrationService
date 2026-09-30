@@ -1,10 +1,11 @@
 using System.Text;
+using System.Text.Json;
+using Integration.Data;
+using Integration.Worker.Models;
 using Integration.Worker.Services;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
-using Integration.Worker.Models;
 
 namespace Integration.Worker
 {
@@ -12,13 +13,15 @@ namespace Integration.Worker
     {
         private readonly ILogger<Worker> _logger;
         private readonly RabbitMqOptions _rabbitMqOptions;
-        private readonly ISystemBClient _systemBClient;
+        private readonly IMessageProcessor _messageProcessor;
+        private readonly IFailedMessageService _failedMessageService;
 
-        public Worker(IOptions<RabbitMqOptions> rabbitMqOptions, ISystemBClient systemBClient, ILogger<Worker> logger)
+        public Worker(IOptions<RabbitMqOptions> rabbitMqOptions, IMessageProcessor messageProcessor, IFailedMessageService failedMessageService, ILogger<Worker> logger)
         {
             _logger          = logger ?? throw new ArgumentNullException(nameof(logger));
             _rabbitMqOptions = rabbitMqOptions.Value ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
-            _systemBClient   = systemBClient ?? throw new ArgumentNullException(nameof(systemBClient));
+            _messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
+            _failedMessageService = failedMessageService ?? throw new ArgumentNullException(nameof(failedMessageService));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,56 +36,52 @@ namespace Integration.Worker
 
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
-
             var consumer = new AsyncEventingBasicConsumer(channel);
+
 
             consumer.ReceivedAsync += async (sender, args) =>
             {
+                var body = args.Body.ToArray();
+                var messageJson = Encoding.UTF8.GetString(body);
+                IntegrationMessage? integrationMessage = null;
+
                 try
                 {
-                    var body = args.Body.ToArray();
-                    var messageJson = Encoding.UTF8.GetString(body);
 
-                    var integrationMessage =
-                        JsonSerializer.Deserialize<IntegrationMessage>(messageJson);
-
-                    _logger.LogInformation(
-                        "Raw RabbitMQ message: {MessageJson}",
-                        messageJson);
-
-                    _logger.LogInformation(
-                        "SourceId: {SourceId}, Data kind: {DataKind}, Data: {Data}",
-                        integrationMessage.SourceId,
-                        integrationMessage.Data.ValueKind,
-                        integrationMessage.Data);
+                    integrationMessage = JsonSerializer.Deserialize<IntegrationMessage>(messageJson);
 
                     if (integrationMessage == null)
                     {
-                        throw new InvalidOperationException(
-                            "Unable to deserialize integration message.");
+                        throw new InvalidOperationException("Unable to deserialize integration message.");
                     }
 
-                    var systemBRequest = new SystemBMessageRequest
+                    await _messageProcessor.ProcessAsync(
+                        integrationMessage,
+                        messageJson,
+                        stoppingToken);
+
+                    await channel.BasicAckAsync(
+                        deliveryTag: args.DeliveryTag,
+                        multiple: false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Message processing failed for {SourceId}: {ErrorMessage}", integrationMessage?.SourceId ?? "Unknown", ex.Message);
+
+                    var failedMessage = new FailedMessage
                     {
-                        SourceId = integrationMessage.SourceId,
-                        CustomerId = integrationMessage.Data
-                            .GetProperty("customerId")
-                            .GetInt32(),
-                        Name = integrationMessage.Data
-                            .GetProperty("name")
-                            .GetString() ?? string.Empty,
-                        Amount = integrationMessage.Data
-                            .GetProperty("amount")
-                            .GetDecimal(),
-                        Status = integrationMessage.Data
-                            .GetProperty("status")
-                            .GetString() ?? string.Empty
+                        Id = Guid.NewGuid(),
+                        SourceId = integrationMessage?.SourceId ?? "Unknown",
+                        Payload = messageJson,
+                        ErrorMessage = ex.Message,
+                        FailureType = FailureType.Transient,
+                        AttemptCount = 1,
+                        CreatedAt = DateTime.UtcNow,
+                        LastAttemptAt = DateTime.UtcNow
                     };
 
-                    _logger.LogInformation("System B request: {Request}", JsonSerializer.Serialize(systemBRequest));
-
-                    await _systemBClient.SendAsync(
-                        systemBRequest,
+                    await _failedMessageService.SaveAsync(
+                        failedMessage,
                         stoppingToken);
 
                     await channel.BasicAckAsync(
@@ -90,14 +89,8 @@ namespace Integration.Worker
                         multiple: false);
 
                     _logger.LogInformation(
-                        "Message {SourceId} successfully sent to System B.",
-                        integrationMessage.SourceId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Error processing RabbitMQ message.");
+                        "Failed message {SourceId} saved and acknowledged.",
+                        failedMessage.SourceId);
                 }
             };
 
