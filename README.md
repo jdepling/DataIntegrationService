@@ -1,4 +1,4 @@
-# DataIntegrationService
+# Data Integration Service
 
 A .NET 8 proof-of-concept for reliable data integration using the **Outbox Pattern**, **RabbitMQ**, background workers, and an idempotent receiving system.
 
