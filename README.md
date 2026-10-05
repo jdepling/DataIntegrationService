@@ -1,6 +1,6 @@
 # Data Integration Service
 
-A .NET 8 proof-of-concept for reliable data integration using the **Outbox Pattern**, **RabbitMQ**, background workers, and an idempotent receiving system.
+A .NET 8 proof-of-concept for reliable data integration demonstrating use of the **Outbox Pattern**, **RabbitMQ**, background workers, **Docker**, **Kubernetes**, unit tests, integration tests, performance tests, a CI/CD pipeline, a **MVC** application for controlled replay, and an idempotent receiving system.
 
 The flow is:
 
