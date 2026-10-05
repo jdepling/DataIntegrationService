@@ -26,6 +26,7 @@ namespace Integration.Api
                  }));
 
             builder.Services.AddScoped<IMessageService, MessageService>();
+            builder.Services.AddScoped<IReplayMessageService, ReplayMessageService>();
 
             var app = builder.Build();
 
