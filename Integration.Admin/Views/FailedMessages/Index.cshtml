@@ -12,7 +12,6 @@
             <th>Source ID</th>
             <th>Error</th>
             <th>Failure Type</th>
-            <th>Attempts</th>
             <th>Created</th>
             <th></th>
         </tr>
@@ -24,7 +23,6 @@
                 <td>@message.SourceId</td>
                 <td>@message.ErrorMessage</td>
                 <td>@message.FailureType</td>
-                <td>@message.AttemptCount</td>
                 <td>@message.CreatedAt.ToLocalTime()</td>
                 <td>
                     <form asp-action="Replay" method="post" style="display:inline;">

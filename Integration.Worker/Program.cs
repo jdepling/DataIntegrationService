@@ -1,6 +1,7 @@
 using Integration.Data;
 using Integration.Worker.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 
 namespace Integration.Worker
 {
@@ -27,6 +28,15 @@ namespace Integration.Worker
             {
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.Delay = TimeSpan.FromSeconds(2);
+
+                options.Retry.OnRetry = args =>
+                {
+                    Console.WriteLine(
+                        $"Polly retry #{args.AttemptNumber + 1} " +
+                        $"for {args.Outcome.Result?.StatusCode}");
+
+                    return default;
+                };
             });
 
             builder.Services.AddScoped<IFailedMessageService, FailedMessageService>();

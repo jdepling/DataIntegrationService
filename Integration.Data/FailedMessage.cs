@@ -12,8 +12,6 @@
 
         public FailureType FailureType { get; set; }
 
-        public int AttemptCount { get; set; }
-
         public DateTime CreatedAt { get; set; }
 
         public DateTime LastAttemptAt { get; set; }

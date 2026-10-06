@@ -10,6 +10,12 @@ namespace Integration.Api.Services
         {
             _dbContext = dbContext;
         }
+
+        /// <summary>
+        ///     Creates a new integration message and saves it to the outbox table.
+        /// </summary>
+        /// <param name="request">The integration message request.</param>
+        /// <returns>The ID of the created message.</returns>
         public async Task<Guid> CreateMessageAsync(IntegrationMessageRequest request)
         {
             var message = new OutboxMessage

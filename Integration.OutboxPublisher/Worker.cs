@@ -18,6 +18,9 @@ namespace Integration.OutboxPublisher
 
         }
 
+        /// <summary>
+        ///    Executes the background service to publish unpublished messages from the outbox to RabbitMQ.
+        /// </summary>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -40,9 +43,7 @@ namespace Integration.OutboxPublisher
                     Console.WriteLine($"Published: {message}");
                 }
 
-                await Task.Delay(
-                    TimeSpan.FromSeconds(5),
-                    stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
     }

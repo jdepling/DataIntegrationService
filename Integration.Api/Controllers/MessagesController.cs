@@ -14,6 +14,11 @@ namespace Integration.Api.Controllers
             _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         }
 
+        /// <summary>
+        ///     Creates a new integration message.
+        /// </summary>
+        /// <param name="request">The integration message request.</param>
+        /// <returns>An IActionResult indicating the result of the operation.</returns>
         [HttpPost]
         public async Task<IActionResult> Post(IntegrationMessageRequest request)
         {

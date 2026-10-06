@@ -15,6 +15,12 @@ namespace Integration.Api.Services
             _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         }
 
+        /// <summary>
+        ///     Replays a failed message by its ID. If the message is found, it deserializes the payload, creates a new message in the outbox, and removes the failed message from the database.
+        /// </summary>
+        /// <param name="failedMessageId">The ID of the failed message to replay.</param>
+        /// <returns>The ID of the replayed message, or null if not found.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the failed message cannot be deserialized.</exception>
         public async Task<Guid?> ReplayAsync(Guid failedMessageId)
         {
             var failedMessage = await _dbContext.FailedMessages
@@ -38,6 +44,10 @@ namespace Integration.Api.Services
             return outboxId;
         }
 
+        /// <summary>
+        ///    Retrieves all failed messages from the database, ordered by creation date in descending order.
+        /// </summary>
+        /// <returns>A list of failed messages.</returns>
         public async Task<List<FailedMessage>> GetFailedMessagesAsync()
         {
             return await _dbContext.FailedMessages

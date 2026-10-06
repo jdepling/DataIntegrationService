@@ -14,6 +14,11 @@ namespace Integration.Api.Controllers
             _replayMessageService = replayMessageService ?? throw new ArgumentNullException(nameof(replayMessageService));
         }
 
+        /// <summary>
+        ///    Replays a failed integration message by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the failed integration message.</param>
+        /// <returns>An IActionResult indicating the result of the operation.</returns>
         [HttpPost("{id}/replay")]
         public async Task<IActionResult> Replay(Guid id)
         {
@@ -27,6 +32,10 @@ namespace Integration.Api.Controllers
             return Accepted(new { id = outboxId });
         }
 
+        /// <summary>
+        ///   Retrieves a list of failed integration messages.
+        /// </summary>
+        /// <returns>An IActionResult indicating the result of the operation.</returns>
         [HttpGet]
         public async Task<IActionResult> GetFailedMessages()
         {

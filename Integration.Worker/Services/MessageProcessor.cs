@@ -14,6 +14,12 @@ namespace Integration.Worker.Services
             _systemBClient = systemBClient ?? throw new ArgumentNullException(nameof(systemBClient));
         }
 
+        /// <summary>
+        ///    Processes the integration message by logging its details and sending it to System B.
+        /// </summary>
+        /// <param name="integrationMessage">The integration message to process.</param>
+        /// <param name="messageJson">The JSON string representing the raw RabbitMQ message.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
         public async Task ProcessAsync(IntegrationMessage integrationMessage, string messageJson, CancellationToken cancellationToken)
         {
             _logger.LogInformation(

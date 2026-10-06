@@ -74,8 +74,7 @@ namespace Integration.Worker
                         SourceId = integrationMessage?.SourceId ?? "Unknown",
                         Payload = messageJson,
                         ErrorMessage = ex.Message,
-                        FailureType = FailureType.Transient, // TODO - need to not hard code this
-                        AttemptCount = 1, // TODO - I need to not hard code this
+                        FailureType = DetermineFailureType(ex),
                         CreatedAt = DateTime.UtcNow,
                         LastAttemptAt = DateTime.UtcNow
                     };
@@ -102,6 +101,25 @@ namespace Integration.Worker
             _logger.LogInformation("Worker is listening for messages...");
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        private static FailureType DetermineFailureType(Exception ex)
+        {
+            if (ex is HttpRequestException httpException)
+            {
+                if (httpException.StatusCode is null)
+                    return FailureType.Transient;
+
+                var statusCode = (int)httpException.StatusCode.Value;
+
+                if (statusCode == 408 || statusCode == 429 || statusCode >= 500)
+                    return FailureType.Transient;
+
+                if (statusCode >= 400 && statusCode < 500)
+                    return FailureType.Permanent;
+            }
+
+            return FailureType.Unknown;
         }
     }
 }

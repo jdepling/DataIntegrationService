@@ -12,6 +12,10 @@ namespace Integration.OutboxPublisher.Services
             _dbContextFactory = dbContextFactory;
         }
 
+        /// <summary>
+        ///     Gets all unpublished messages from the outbox.
+        /// </summary>
+        /// <returns>A list of unpublished messages.<see cref="OutboxMessage"/></returns>
         public async Task<List<OutboxMessage>> GetUnpublishedMessagesAsync(CancellationToken cancellationToken)
         {
             await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -23,10 +27,14 @@ namespace Integration.OutboxPublisher.Services
             return messages;
         }
 
+        /// <summary>
+        ///    Marks a message as published by setting its PublishedAt property to the current UTC time.
+        /// </summary>
+        /// <param name="messageId">The ID of the message to mark as published.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
         public async Task MarkMessageAsPublishedAsync(Guid messageId, CancellationToken cancellationToken)
         {
-            await using var dbContext =
-            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
             var message = await dbContext.OutboxMessages.SingleAsync(x => x.Id == messageId, cancellationToken);
 
