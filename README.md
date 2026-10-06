@@ -214,6 +214,9 @@ The integration queue is:
 ```text
 integration-queue
 ```
+## Admin Screen
+MVC application that allows a user to do a controlled replay on failed messages
+http://localhost:5253
 
 ## Stop
 
