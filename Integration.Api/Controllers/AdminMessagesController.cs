@@ -26,5 +26,13 @@ namespace Integration.Api.Controllers
 
             return Accepted(new { id = outboxId });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFailedMessages()
+        {
+            var messages = await _replayMessageService.GetFailedMessagesAsync();
+
+            return Ok(messages);
+        }
     }
 }

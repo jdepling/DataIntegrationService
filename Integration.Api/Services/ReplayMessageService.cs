@@ -21,20 +21,28 @@ namespace Integration.Api.Services
                 .FirstOrDefaultAsync(x => x.Id == failedMessageId);
 
             if (failedMessage == null)
-            {
                 return null;
-            }
 
             var request = JsonSerializer.Deserialize<IntegrationMessageRequest>(
                 failedMessage.Payload);
 
             if (request == null)
-            {
                 throw new InvalidOperationException(
                     $"Unable to deserialize failed message {failedMessageId}.");
-            }
 
-            return await _messageService.CreateMessageAsync(request);
+            var outboxId = await _messageService.CreateMessageAsync(request);
+
+            _dbContext.FailedMessages.Remove(failedMessage);
+            await _dbContext.SaveChangesAsync();
+
+            return outboxId;
+        }
+
+        public async Task<List<FailedMessage>> GetFailedMessagesAsync()
+        {
+            return await _dbContext.FailedMessages
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
         }
     }
 }

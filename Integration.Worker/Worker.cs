@@ -74,8 +74,8 @@ namespace Integration.Worker
                         SourceId = integrationMessage?.SourceId ?? "Unknown",
                         Payload = messageJson,
                         ErrorMessage = ex.Message,
-                        FailureType = FailureType.Transient,
-                        AttemptCount = 1,
+                        FailureType = FailureType.Transient, // TODO - need to not hard code this
+                        AttemptCount = 1, // TODO - I need to not hard code this
                         CreatedAt = DateTime.UtcNow,
                         LastAttemptAt = DateTime.UtcNow
                     };

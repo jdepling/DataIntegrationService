@@ -8,18 +8,13 @@ namespace Integration.Worker.Services
         private readonly ILogger<MessageProcessor> _logger;
         private readonly ISystemBClient _systemBClient;
 
-        public MessageProcessor(
-            ILogger<MessageProcessor> logger,
-            ISystemBClient systemBClient)
+        public MessageProcessor(ILogger<MessageProcessor> logger, ISystemBClient systemBClient)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _systemBClient = systemBClient ?? throw new ArgumentNullException(nameof(systemBClient));
         }
 
-        public async Task ProcessAsync(
-            IntegrationMessage integrationMessage,
-            string messageJson,
-            CancellationToken cancellationToken)
+        public async Task ProcessAsync(IntegrationMessage integrationMessage, string messageJson, CancellationToken cancellationToken)
         {
             _logger.LogInformation(
                 "Raw RabbitMQ message: {MessageJson}",
