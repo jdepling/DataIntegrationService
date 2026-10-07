@@ -215,7 +215,7 @@ The integration queue is:
 integration-queue
 ```
 ## Admin Screen
-MVC application that allows a user to do a controlled replay on failed messages
+A MVC application that allows a user to do a controlled replay on failed messages with a helpful user interface. It also allows the user to view and correct the payload before resubmitting for a replay.
 http://localhost:5253
 
 ## Stop
