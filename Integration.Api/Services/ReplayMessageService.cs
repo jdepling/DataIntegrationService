@@ -54,5 +54,47 @@ namespace Integration.Api.Services
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
+
+        /// <summary>
+        ///    Retrieves a specific failed message by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the failed message to retrieve.</param>
+        /// <returns>The failed message, or null if not found.</returns>
+        public async Task<FailedMessage?> GetFailedMessageAsync(Guid id)
+        {
+            return await _dbContext.FailedMessages
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        /// <summary>
+        ///   Replays a failed message with the fixed payload. 
+        ///   If the message is found, it deserializes the provided payload, creates a new message in the outbox, 
+        ///   and removes the failed message from the database.
+        /// </summary>
+        /// <param name="failedMessageId">The ID of the failed message to replay.</param>
+        /// <param name="payload">The fixed payload for the message.</param>
+        /// <returns>The ID of the replayed message, or null if not found.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the payload cannot be deserialized.</exception>
+        public async Task<Guid?> ReplayWithPayloadAsync(Guid failedMessageId, string payload)
+        {
+            var failedMessage = await _dbContext.FailedMessages
+                .FirstOrDefaultAsync(x => x.Id == failedMessageId);
+
+            if (failedMessage == null)
+                return null;
+
+            var request = JsonSerializer.Deserialize<IntegrationMessageRequest>(payload);
+
+            if (request == null)
+                throw new InvalidOperationException(
+                    $"Unable to deserialize replay payload for failed message {failedMessageId}.");
+
+            var outboxId = await _messageService.CreateMessageAsync(request);
+
+            _dbContext.FailedMessages.Remove(failedMessage);
+            await _dbContext.SaveChangesAsync();
+
+            return outboxId;
+        }
     }
 }

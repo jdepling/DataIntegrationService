@@ -1,0 +1,68 @@
+﻿@model Integration.Admin.Models.FailedMessageViewModel
+
+@{
+    ViewData["Title"] = "Failed Message Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Failed Message Details</h1>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Back to Failed Messages
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        Message Information
+    </div>
+
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Source ID</dt>
+            <dd class="col-sm-9">@Model.SourceId</dd>
+
+            <dt class="col-sm-3">Failure Type</dt>
+            <dd class="col-sm-9">@Model.FailureType</dd>
+
+            <dt class="col-sm-3">Error</dt>
+            <dd class="col-sm-9">@Model.ErrorMessage</dd>
+
+            <dt class="col-sm-3">Created</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime()</dd>
+
+            <dt class="col-sm-3">Last Attempt</dt>
+            <dd class="col-sm-9">@Model.LastAttemptAt.ToLocalTime()</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Message Payload
+    </div>
+
+    <div class="card-body">
+        <p class="text-muted">
+            Correct the payload below before replaying the message.
+        </p>
+
+        <form asp-action="ReplayFixed" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="mb-3">
+                <textarea class="form-control font-monospace"
+                          rows="20"
+                          name="payload">@Model.Payload</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Replay Fixed Message
+            </button>
+
+            <a asp-action="Index" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
