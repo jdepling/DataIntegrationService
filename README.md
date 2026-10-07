@@ -10,37 +10,9 @@ The project demonstrates reliable, at-least-once message delivery while preventi
 
 ## Architecture
 
-```text
-System A
-    │
-    │ POST
-    ▼
-Integration API
-    │
-    │ Save
-    ▼
-SQL Outbox
-    │
-    │ Poll
-    ▼
-Outbox Publisher
-    │
-    │ Publish
-    ▼
-RabbitMQ
-    │
-    │ Consume
-    ▼
-Integration Worker
-    │
-    │ HTTP POST
-    ▼
-System B
-    │
-    │ Save
-    ▼
-System B SQL Database
-```
+
+<img width="1312" height="1199" alt="Message Flow and Recovery Architecture" src="https://github.com/user-attachments/assets/7562272c-232b-4db7-81ff-a581d4bbfc42" />
+
 
 ### Key concepts demonstrated
 
@@ -52,6 +24,7 @@ System B SQL Database
 * **Database protection** — `SourceId` has a unique database index.
 * **Docker Compose** — all services run together in containers.
 * **EF Core migrations** — databases are initialized automatically when the environment starts.
+* **Controlled Replay** — A MVC web application that allows the user to fix (if needed) and replay previously failed messages.
 
 ## Configuration
 
