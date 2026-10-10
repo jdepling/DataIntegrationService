@@ -11,6 +11,7 @@
     <Project Path="Integration.Worker/Integration.Worker.csproj" />
   </Folder>
   <Folder Name="/Tests/">
-    <Project Path="Tests/Integration.Api.Tests/Integration.Api.Tests.csproj" />
+    <Project Path="Tests/Integration.Admin.E2ETests/Integration.Admin.E2ETests.csproj" Id="501507af-0cfe-4c91-8e80-1d36ff8e9aa2" />
+    <Project Path="Tests/Integration.Api.Tests/Integration.Api.UnitTests.csproj" />
   </Folder>
 </Solution>
