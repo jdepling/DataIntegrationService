@@ -2,6 +2,8 @@
 
 A .NET 8 proof-of-concept for reliable data integration demonstrating use of the **Outbox Pattern**, **RabbitMQ**, background workers, **Docker**, **Kubernetes**, unit tests, integration tests, performance tests, a CI/CD pipeline, a **MVC** application for controlled replay, Swagger, and an idempotent receiving system.
 
+Admin E2E tests are written in **Selenium** (using the Page Object Model design pattern) and use **TestContainers** to run the test environment in **Docker**.
+
 The flow is:
 
 **System A → Integration API → SQL Outbox → Outbox Publisher → RabbitMQ → Integration Worker → System B → SQL**
