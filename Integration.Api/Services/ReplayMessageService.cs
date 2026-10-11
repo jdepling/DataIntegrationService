@@ -83,7 +83,9 @@ namespace Integration.Api.Services
             if (failedMessage == null)
                 return null;
 
-            var request = JsonSerializer.Deserialize<IntegrationMessageRequest>(payload);
+            var request = JsonSerializer.Deserialize<IntegrationMessageRequest>(
+                payload,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
             if (request == null)
                 throw new InvalidOperationException(

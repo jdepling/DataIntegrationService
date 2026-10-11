@@ -20,7 +20,7 @@
     <div class="card-body">
         <dl class="row mb-0">
             <dt class="col-sm-3">Source ID</dt>
-            <dd class="col-sm-9">@Model.SourceId</dd>
+            <dd id ="source-id" class="col-sm-9">@Model.SourceId</dd>
 
             <dt class="col-sm-3">Failure Type</dt>
             <dd class="col-sm-9">@Model.FailureType</dd>
@@ -56,7 +56,7 @@
                           name="payload">@Model.Payload</textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary">
+            <button id="replay-fixed-button" type="submit" class="btn btn-primary">
                 Replay Fixed Message
             </button>
 

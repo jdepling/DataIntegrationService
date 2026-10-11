@@ -67,9 +67,7 @@ namespace Integration.Admin.Controllers
             var success = await _adminApiClient.ReplayFixedMessageAsync(id, payload);
 
             if (!success)
-            {
                 return NotFound();
-            }
 
             return RedirectToAction(nameof(Index));
         }

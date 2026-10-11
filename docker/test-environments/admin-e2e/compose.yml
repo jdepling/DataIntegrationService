@@ -12,8 +12,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-    volumes:
-      - e2e_sqlserver_data:/var/opt/mssql
 
   rabbitmq:
     image: rabbitmq:4-management
@@ -24,7 +22,7 @@ services:
       - ../../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
       - ../../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     tmpfs:
-      - /var/lib/rabbitmq
+      - /var/lib/rabbitmq:uid=999,gid=999,mode=1770
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -51,6 +49,24 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+  
+  seed-failed-messages:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        for i in {1..60}; do
+          /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$$SA_PASSWORD" -C -Q "IF DB_ID('DataIntegrationService') IS NOT NULL AND OBJECT_ID('DataIntegrationService.dbo.FailedMessages') IS NOT NULL SELECT 1" -b >/dev/null 2>&1 && break
+          sleep 2
+        done
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$$SA_PASSWORD" -C -d DataIntegrationService -i /seed/seed-failed-messages.sql -b
+    environment:
+      SA_PASSWORD: "${SA_PASSWORD}"
+    volumes:
+      - ./sql/seed-failed-messages.sql:/seed/seed-failed-messages.sql:ro
+    depends_on:
+      migration:
+        condition: service_completed_successfully
 
   api:
     build:
@@ -61,6 +77,8 @@ services:
       ConnectionStrings__IntegrationDatabase: "Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
     depends_on:
       migration:
+        condition: service_completed_successfully
+      seed-failed-messages:
         condition: service_completed_successfully
 
   outbox-publisher:
@@ -126,6 +144,3 @@ services:
     depends_on:
       admin:
         condition: service_started
-
-volumes:
-  e2e_sqlserver_data:
