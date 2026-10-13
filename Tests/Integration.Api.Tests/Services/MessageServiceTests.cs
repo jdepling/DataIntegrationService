@@ -14,6 +14,9 @@ namespace Integration.Api.UnitTests.Services
         private readonly IntegrationDbContext _dbContext;
         private readonly MessageService _sut;
 
+        /// <summary>
+        /// Important note: This constructor is called before each test, ensuring a fresh in-memory database for isolation.
+        /// </summary>
         public MessageServiceTests()
         {
             var options = new DbContextOptionsBuilder<IntegrationDbContext>()
