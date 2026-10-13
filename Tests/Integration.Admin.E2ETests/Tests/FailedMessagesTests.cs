@@ -11,78 +11,54 @@ namespace Integration.Admin.E2ETests.Tests;
 
 public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
 {
+    private readonly TestEnvironmentFixture _fixture;
+
     public FailedMessagesTests(TestEnvironmentFixture fixture)
     {
+        _fixture = fixture;
     }
 
     [Fact]
     public void AdminHomePage_LoadsSuccessfully()
     {
-        var options = new ChromeOptions();
-
-        using var driver = new RemoteWebDriver(
-            new Uri(E2ETestSettings.SeleniumUrl),
-            options.ToCapabilities());
-
+        using var driver = CreateDriver();
         var page = new FailedMessagesPage(driver);
 
         page.Navigate();
-
         page.IsLoaded().Should().BeTrue();
     }
 
     [Fact]
     public void FailedMessagesPage_DisplaysSeededMessages()
     {
-        var options = new ChromeOptions();
-
-        using var driver = new RemoteWebDriver(
-            new Uri(E2ETestSettings.SeleniumUrl),
-            options.ToCapabilities());
-
+        using var driver = CreateDriver();
         var page = new FailedMessagesPage(driver);
 
-        page.Navigate();
-
-        page.IsLoaded().Should().BeTrue(
-            "the Failed Messages page should load before checking its data");
+        NavigateToFailedMessagesPage(page);
 
         var sourceIds = page.GetSourceIds();
-
         sourceIds.Should().Contain(
             "E2E-TRANSIENT-001",
             "E2E-PERMANENT-001",
             "E2E-CORRECT-PAYLOAD-001");
     }
 
-
     [Fact]
     public void FailedMessageDetails_DisplaysCorrectMessageAndPayload()
     {
-        var options = new ChromeOptions();
-
-        using var driver = new RemoteWebDriver(
-            new Uri(E2ETestSettings.SeleniumUrl),
-            options.ToCapabilities());
-
+        using var driver = CreateDriver();
         var messagesPage = new FailedMessagesPage(driver);
-        messagesPage.Navigate();
 
-        messagesPage.IsLoaded().Should().BeTrue();
-
+        NavigateToFailedMessagesPage(messagesPage);
         messagesPage.OpenDetails("E2E-CORRECT-PAYLOAD-001");
 
         var detailsPage = new FailedMessageDetailsPage(driver);
 
         detailsPage.IsLoaded().Should().BeTrue();
-        detailsPage.GetSourceId()
-            .Should()
-            .Be("E2E-CORRECT-PAYLOAD-001");
-
+        detailsPage.GetSourceId().Should().Be("E2E-CORRECT-PAYLOAD-001");
         detailsPage.IsReplayButtonDisplayed().Should().BeTrue();
 
         using var payload = JsonDocument.Parse(detailsPage.GetPayload());
-
         payload.RootElement
             .GetProperty("data")
             .GetProperty("customerId")
@@ -94,25 +70,16 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     [Fact]
     public void FailedMessageDetails_CorrectsPayloadAndReplaysMessage()
     {
-        var options = new ChromeOptions();
-
-        using var driver = new RemoteWebDriver(
-            new Uri(E2ETestSettings.SeleniumUrl),
-            options.ToCapabilities());
-
+        using var driver = CreateDriver();
         var messagesPage = new FailedMessagesPage(driver);
-        messagesPage.Navigate();
 
-        messagesPage.IsLoaded().Should().BeTrue();
-
+        NavigateToFailedMessagesPage(messagesPage);
         messagesPage.OpenDetails("E2E-CORRECT-PAYLOAD-001");
 
         var detailsPage = new FailedMessageDetailsPage(driver);
 
         detailsPage.IsLoaded().Should().BeTrue();
-        detailsPage.GetSourceId()
-            .Should()
-            .Be("E2E-CORRECT-PAYLOAD-001");
+        detailsPage.GetSourceId().Should().Be("E2E-CORRECT-PAYLOAD-001");
 
         using (var originalPayload = JsonDocument.Parse(detailsPage.GetPayload()))
         {
@@ -130,15 +97,23 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
         detailsPage.UpdatePayload(correctedPayload.ToJsonString());
         detailsPage.ClickReplayFixedMessage();
 
-        var pageLoaded = messagesPage.IsLoaded();
-
-        pageLoaded.Should().BeTrue();
-
+        messagesPage.IsLoaded().Should().BeTrue();
         messagesPage.WaitForMessageToDisappear("E2E-CORRECT-PAYLOAD-001");
-
-        messagesPage.GetSourceIds()
-            .Should()
-            .NotContain("E2E-CORRECT-PAYLOAD-001");
+        messagesPage.GetSourceIds().Should().NotContain("E2E-CORRECT-PAYLOAD-001");
     }
 
+    private RemoteWebDriver CreateDriver()
+    {
+        var options = new ChromeOptions();
+        return new RemoteWebDriver(
+            new Uri(E2ETestSettings.SeleniumUrl),
+            options.ToCapabilities());
+    }
+
+    private void NavigateToFailedMessagesPage(FailedMessagesPage page)
+    {
+        page.Navigate();
+        page.IsLoaded().Should().BeTrue(
+            "the Failed Messages page should load before checking its data");
+    }
 }
