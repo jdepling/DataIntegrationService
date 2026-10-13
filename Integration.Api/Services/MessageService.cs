@@ -18,6 +18,8 @@ namespace Integration.Api.Services
         /// <returns>The ID of the created message.</returns>
         public async Task<Guid> CreateMessageAsync(IntegrationMessageRequest request)
         {
+           ArgumentNullException.ThrowIfNull(request);
+
             var message = new OutboxMessage
             {
                 Id = Guid.NewGuid(),
