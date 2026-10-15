@@ -34,8 +34,6 @@ Create a `.env` file in the solution root:
 
 ```env
 SA_PASSWORD=YourStrongPassword123!
-RABBITMQ_USERNAME=admin
-RABBITMQ_PASSWORD=admin
 ```
 
 These credentials are used by the Docker environment.
