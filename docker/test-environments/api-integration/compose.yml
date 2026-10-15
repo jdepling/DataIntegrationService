@@ -1,0 +1,116 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
+    ports:
+      - "14332:1433"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5674:5672"
+      - "15674:15672"
+    volumes:
+      - ../../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ../../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    tmpfs:
+      - /var/lib/rabbitmq:uid=999,gid=999,mode=1770
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  migration:
+    build:
+      context: ../../..
+      dockerfile: Integration.Api/Dockerfile.migrations
+    environment:
+      ConnectionStrings__IntegrationDatabase: "Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: "no"
+
+  system-b-migration:
+    build:
+      context: ../../..
+      dockerfile: Integration.SystemB/Dockerfile.migrations
+    environment:
+      ConnectionStrings__SystemBDatabase: "Server=sqlserver,1433;Database=SystemB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ../../..
+      dockerfile: Integration.Api/Dockerfile
+    ports:
+      - "5255:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__IntegrationDatabase: "Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  outbox-publisher:
+    build:
+      context: ../../..
+      dockerfile: Integration.OutboxPublisher/Dockerfile
+    environment:
+      ConnectionStrings__IntegrationDatabase: "Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  system-b:
+    build:
+      context: ../../..
+      dockerfile: Integration.SystemB/Dockerfile
+    ports:
+      - "5082:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SystemBDatabase: "Server=sqlserver,1433;Database=SystemB;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+    depends_on:
+      system-b-migration:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../../..
+      dockerfile: Integration.Worker/Dockerfile
+    environment:
+      ConnectionStrings__IntegrationDatabase: "Server=sqlserver,1433;Database=DataIntegrationService;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+      SystemB__BaseUrl: "http://system-b:8080/"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      system-b-migration:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      system-b:
+        condition: service_started
+    restart: unless-stopped

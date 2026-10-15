@@ -208,3 +208,13 @@ docker compose down -v
 ```
 
 > **Warning:** `docker compose down -v` deletes the Docker volumes containing the SQL Server and RabbitMQ data.
+
+## Testing
+
+This repository includes automated integration and end-to-end tests.
+
+- **API integration tests:** See [`Tests/Integration.Api.IntegrationTests/README.md`](Tests/Integration.Api.IntegrationTests/README.md) for setup and instructions to run the API-to-System-B integration tests. 
+- **Admin end-to-end tests:** See [`Tests/Integration.Admin.E2ETests/README.md`](Tests/Integration.Admin.E2ETests/README.md) for setup and instructions to run the browser-based E2E tests. This project showcases Testcontainers.
+
+Each test environment has its own Docker Compose configuration and `.env.example` file. Copy the example to `.env` and configure the required values before starting the environment. Never commit `.env` files or credentials.
+
