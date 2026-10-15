@@ -39,7 +39,6 @@ public sealed class TestEnvironmentFixture : IAsyncLifetime
 
         await _environment.StartAsync();
 
-
         using var httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(5)
