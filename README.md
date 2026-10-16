@@ -207,7 +207,7 @@ docker compose down -v
 
 > **Warning:** `docker compose down -v` deletes the Docker volumes containing the SQL Server and RabbitMQ data.
 
-## Testing
+## Automated Tests
 
 This repository includes automated integration and end-to-end tests.
 
