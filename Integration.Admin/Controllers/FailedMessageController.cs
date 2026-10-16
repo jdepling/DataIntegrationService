@@ -22,9 +22,7 @@ namespace Integration.Admin.Controllers
             var message = await _adminApiClient.GetFailedMessageAsync(id);
 
             if (message == null)
-            {
                 return NotFound();
-            }
 
             return View(message);
         }

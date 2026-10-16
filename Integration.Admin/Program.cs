@@ -5,10 +5,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>(client =>
+builder.Services.AddHttpClient<HttpClientAdapter>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
 });
+
+builder.Services.AddScoped<IHttpClientAdapter>(sp => sp.GetRequiredService<HttpClientAdapter>());
+builder.Services.AddScoped<IAdminApiClient, AdminApiClient>();
 
 var app = builder.Build();
 
