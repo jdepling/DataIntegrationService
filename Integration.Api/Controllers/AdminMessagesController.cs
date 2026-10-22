@@ -1,10 +1,12 @@
 ﻿using Integration.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Integration.Api.Controllers
 {
     [Route("api/admin/messages")]
     [ApiController]
+    [Authorize(Policy = "ReplayMessages")]
     public class AdminMessagesController : ControllerBase
     {
         private readonly IReplayMessageService _replayMessageService;

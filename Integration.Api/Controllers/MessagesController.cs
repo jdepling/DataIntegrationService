@@ -1,4 +1,5 @@
 ﻿using Integration.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Integration.Api.Controllers
@@ -20,6 +21,7 @@ namespace Integration.Api.Controllers
         /// <param name="request">The integration message request.</param>
         /// <returns>An IActionResult indicating the result of the operation.</returns>
         [HttpPost]
+        [Authorize(Policy = "SubmitMessages")]
         public async Task<IActionResult> Post(IntegrationMessageRequest request)
         {
             var id = await _messageService.CreateMessageAsync(request);
