@@ -72,6 +72,13 @@ Open the Integration API Swagger UI:
 
 http://localhost:5252/swagger
 
+You will need to select the "Authorize" button. Normally we wouldn't advertise our credentials, but this is for testing purposes:
+
+```text
+username: testadmin@test.com
+password: 123StrongPassword!
+```
+
 POST a message using:
 
 ```json
