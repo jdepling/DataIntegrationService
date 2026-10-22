@@ -1,8 +1,10 @@
 ﻿using Integration.Admin.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Integration.Admin.Controllers
 {
+    [Authorize(Policy = "AdminOnly")]
     public class FailedMessagesController : Controller
     {
         private readonly IAdminApiClient _adminApiClient;

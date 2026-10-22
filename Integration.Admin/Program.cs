@@ -1,3 +1,4 @@
+using Auth0.AspNetCore.Authentication;
 using Integration.Admin.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,13 +6,44 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireClaim(
+                  "https://data-integration-service/roles",
+                  "Integration Admin"));
+});
+
+
+builder.Services.AddAuth0WebAppAuthentication(options =>
+{
+    options.Domain = builder.Configuration["Auth0:Domain"]!;
+    options.ClientId = builder.Configuration["Auth0:ClientId"]!;
+    options.ClientSecret = builder.Configuration["Auth0:ClientSecret"]!;
+    options.Scope = "openid profile email";
+})
+.WithAccessToken(options =>
+{
+    options.Audience = builder.Configuration["Auth0:Audience"];
+    options.ScopeByAudience = new Dictionary<string, string>
+    {
+        ["https://data-integration-service-api"] = "messages:replay"
+    };
+});
+
+
 builder.Services.AddHttpClient<HttpClientAdapter>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
 });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IHttpClientAdapter>(sp => sp.GetRequiredService<HttpClientAdapter>());
 builder.Services.AddScoped<IAdminApiClient, AdminApiClient>();
+
 
 var app = builder.Build();
 
@@ -19,7 +51,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -27,6 +58,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
