@@ -191,6 +191,18 @@ integration-queue
 A MVC application that allows a user to do a controlled replay on failed messages with a helpful user interface. It also allows the user to view and correct the payload before resubmitting for a replay.
 http://localhost:5253
 
+You will be prompted to login:
+
+<img width="396" height="654" alt="image" src="https://github.com/user-attachments/assets/574ed746-d932-4a9d-849f-f001dc87a7bc" />
+
+
+Use these credentials:
+
+```text
+username: testadmin@test.com
+password: 123StrongPassword!
+```
+
 ## Stop
 
 Stop the containers:
