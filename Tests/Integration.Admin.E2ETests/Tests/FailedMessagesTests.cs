@@ -22,6 +22,8 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     public void AdminHomePage_LoadsSuccessfully()
     {
         using var driver = CreateDriver();
+        LoginAsAdmin(driver);
+        
         var page = new FailedMessagesPage(driver);
 
         page.Navigate();
@@ -32,6 +34,7 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     public void FailedMessagesPage_DisplaysSeededMessages()
     {
         using var driver = CreateDriver();
+        LoginAsAdmin(driver);
         var page = new FailedMessagesPage(driver);
 
         NavigateToFailedMessagesPage(page);
@@ -47,6 +50,7 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     public void FailedMessageDetails_DisplaysCorrectMessageAndPayload()
     {
         using var driver = CreateDriver();
+        LoginAsAdmin(driver);
         var messagesPage = new FailedMessagesPage(driver);
 
         NavigateToFailedMessagesPage(messagesPage);
@@ -71,6 +75,7 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     public void FailedMessageDetails_CorrectsPayloadAndReplaysMessage()
     {
         using var driver = CreateDriver();
+        LoginAsAdmin(driver);
         var messagesPage = new FailedMessagesPage(driver);
 
         NavigateToFailedMessagesPage(messagesPage);
@@ -105,6 +110,8 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
     private RemoteWebDriver CreateDriver()
     {
         var options = new ChromeOptions();
+        options.AddArgument(
+        "--unsafely-treat-insecure-origin-as-secure=http://admin:8080");
         return new RemoteWebDriver(
             new Uri(E2ETestSettings.SeleniumUrl),
             options.ToCapabilities());
@@ -116,4 +123,25 @@ public sealed class FailedMessagesTests : IClassFixture<TestEnvironmentFixture>
         page.IsLoaded().Should().BeTrue(
             "the Failed Messages page should load before checking its data");
     }
+
+    private void LoginAsAdmin(RemoteWebDriver driver)
+    {
+        var username = Environment.GetEnvironmentVariable(
+            "E2E_AUTH0_USERNAME");
+
+        var password = Environment.GetEnvironmentVariable(
+            "E2E_AUTH0_PASSWORD");
+
+        if (string.IsNullOrWhiteSpace(username)
+            || string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "Set E2E_AUTH0_USERNAME and E2E_AUTH0_PASSWORD " +
+                "environment variables before running E2E tests.");
+        }
+
+        var loginPage = new LoginPage(driver);
+        loginPage.Login(username, password);
+    }
+
 }

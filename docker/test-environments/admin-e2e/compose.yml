@@ -132,6 +132,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ApiBaseUrl: "http://api:8080/"
+      Auth0__ClientSecret: ${AUTH0_ADMIN_CLIENT_SECRET}
     depends_on:
       api:
         condition: service_started

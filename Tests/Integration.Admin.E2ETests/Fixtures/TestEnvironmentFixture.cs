@@ -11,6 +11,15 @@ public sealed class TestEnvironmentFixture : IAsyncLifetime
     {
         var repositoryRoot = FindRepositoryRoot();
 
+        var envFile = Path.Combine(
+            repositoryRoot,
+            "docker",
+            "test-environments",
+            "admin-e2e",
+            ".env");
+
+        LoadEnvironmentFile(envFile);
+
         var composeFile = Path.Combine(
             repositoryRoot,
             "docker",
@@ -109,4 +118,28 @@ public sealed class TestEnvironmentFixture : IAsyncLifetime
         throw new DirectoryNotFoundException(
             "Could not locate the DataIntegrationService solution root.");
     }
+
+    private static void LoadEnvironmentFile(string path)
+    {
+        foreach (var line in File.ReadLines(path))
+        {
+            var separatorIndex = line.IndexOf('=');
+
+            if (separatorIndex <= 0)
+            {
+                continue;
+            }
+
+            var key = line[..separatorIndex].Trim();
+            var value = line[(separatorIndex + 1)..].Trim();
+
+            if (string.IsNullOrWhiteSpace(
+                    Environment.GetEnvironmentVariable(key)))
+            {
+                Environment.SetEnvironmentVariable(key, value);
+            }
+        }
+    }
+
+
 }
