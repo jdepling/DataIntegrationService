@@ -15,5 +15,6 @@
     <Project Path="Tests/Integration.Admin.UnitTests/Integration.Admin.UnitTests.csproj" Id="b17b2bed-b9d7-4955-bac2-3dfa5a2f028d" />
     <Project Path="Tests/Integration.Api.IntegrationTests/Integration.Api.IntegrationTests.csproj" />
     <Project Path="Tests/Integration.Api.Tests/Integration.Api.UnitTests.csproj" />
+    <Project Path="Tests/Integration.OutboxService.UnitTests/Integration.OutboxPublisher.UnitTests.csproj" Id="8ab43314-2d79-47ee-b400-e9cca22569cf" />
   </Folder>
 </Solution>

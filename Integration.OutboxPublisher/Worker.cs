@@ -1,48 +1,24 @@
-using Integration.Data;
 using Integration.OutboxPublisher.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace Integration.OutboxPublisher
 {
     public class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
-        private readonly IOutboxService _outboxService;
-        private readonly IPublishService _publishService;
+        private readonly IOutboxMessageProcessor _messageProcessor;
 
-        public Worker(IDbContextFactory<IntegrationDbContext> dbContextFactory, IOutboxService outboxService, IPublishService publishService, ILogger<Worker> logger)
+        public Worker(IOutboxMessageProcessor messageProcessor)
         {
-            _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
-            _publishService = publishService ?? throw new ArgumentNullException(nameof(publishService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
+            _messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
         }
 
         /// <summary>
-        ///    Executes the background service to publish unpublished messages from the outbox to RabbitMQ.
+        ///     Executes the background service on a five-second interval.
         /// </summary>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var messages = await _outboxService.GetUnpublishedMessagesAsync(stoppingToken);
-
-                foreach (var message in messages)
-                {
-                    _logger.LogInformation(
-                        "Found unpublished message {MessageId} from source {SourceId}",
-                        message.Id,
-                        message.SourceId);
-
-                    // Send message to RabbitMQ
-                    await _publishService.PublishAsync(message, stoppingToken);
-
-                    // Mark message as published
-                    await _outboxService.MarkMessageAsPublishedAsync(message.Id, stoppingToken);
-
-                    Console.WriteLine($"Published: {message}");
-                }
-
+                await _messageProcessor.ProcessMessagesAsync(stoppingToken);
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }

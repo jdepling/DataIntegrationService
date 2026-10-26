@@ -20,6 +20,7 @@ namespace Integration.OutboxPublisher
             builder.Services.AddHostedService<Worker>();
             builder.Services.AddTransient<IPublishService, PublishService>();
             builder.Services.AddTransient<IOutboxService, OutboxService>();
+            builder.Services.AddSingleton<IOutboxMessageProcessor, OutboxMessageProcessor>();
 
             var host = builder.Build();
             host.Run();
