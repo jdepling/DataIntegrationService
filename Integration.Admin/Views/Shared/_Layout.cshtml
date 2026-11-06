@@ -36,6 +36,31 @@
                             </a>
                         </li>
                     </ul>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav align-items-center">
+                            <li class="nav-item">
+                                <span class="navbar-text me-3">
+                                    @User.FindFirst("email")?.Value
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account"
+                                      asp-action="Logout"
+                                      method="post"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-outline-light btn-sm">
+                                        Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    }
+
                 </div>
             </div>
         </nav>

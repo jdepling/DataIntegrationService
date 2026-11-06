@@ -48,6 +48,6 @@ public sealed class AccountController : Controller
         await HttpContext.SignOutAsync(
             CookieAuthenticationDefaults.AuthenticationScheme);
 
-        return new EmptyResult();
+        return RedirectToAction("Index", "FailedMessages");
     }
 }
