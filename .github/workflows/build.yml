@@ -38,7 +38,7 @@ jobs:
 
       - name: Run API unit tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: dotnet test Tests/Integration.Api/Integration.Api.UnitTests.csproj --configuration Release --no-build --no-restore --logger "trx;LogFileName=Api.UnitTests.trx" --results-directory TestResults
+        run: dotnet test Tests/Integration.Api.UnitTests/Integration.Api.UnitTests.csproj --configuration Release --no-build --no-restore --logger "trx;LogFileName=Api.UnitTests.trx" --results-directory TestResults
 
       - name: Run Outbox Publisher unit tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
