@@ -1,0 +1,85 @@
+
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    env:
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+      AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+      AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+      AUTH0_TEST_CLIENT_ID: ${{ secrets.AUTH0_TEST_CLIENT_ID }}
+      AUTH0_TEST_CLIENT_SECRET: ${{ secrets.AUTH0_TEST_CLIENT_SECRET }}
+
+      COMPOSE_FILE: docker/test-environments/api-integration/compose.yml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Validate required secrets
+        run: |
+          for name in SA_PASSWORD AUTH0_DOMAIN AUTH0_AUDIENCE AUTH0_TEST_CLIENT_ID AUTH0_TEST_CLIENT_SECRET; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Start integration environment
+        run: |
+          docker compose -f "$COMPOSE_FILE" up --build --detach
+
+          for attempt in {1..60}; do
+            if curl --fail --silent --output /dev/null http://localhost:5255/swagger/index.html; then
+              echo "Integration API is ready."
+              exit 0
+            fi
+
+            echo "Waiting for Integration API... ($attempt/60)"
+            sleep 2
+          done
+
+          echo "Integration API failed to become ready."
+          docker compose -f "$COMPOSE_FILE" logs
+          exit 1
+
+      - name: Run integration tests
+        id: integration-tests
+        run: dotnet test Tests/Integration.Api.IntegrationTests/Integration.Api.IntegrationTests.csproj --configuration Release --logger "trx;LogFileName=Api.IntegrationTests.trx" --results-directory TestResults
+
+      - name: Publish Integration Test Report
+        if: ${{ !cancelled() && steps.integration-tests.outcome != 'skipped' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Integration Test Results
+          path: TestResults/*.trx
+          reporter: dotnet-trx
+          use-actions-summary: true
+          report-title: Integration Test Results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+      - name: Stop integration environment
+        if: always()
+        run: docker compose -f "$COMPOSE_FILE" down --volumes --remove-orphans
