@@ -45,6 +45,7 @@ jobs:
           timeout 180s docker compose -f "$COMPOSE_FILE" up --build --detach || {
             echo "Docker Compose failed or timed out."
             docker compose -f "$COMPOSE_FILE" ps -a
+            docker inspect --format='{{json .State.Health}}' api-integration-rabbitmq-1
             docker compose -f "$COMPOSE_FILE" logs --no-color rabbitmq
             exit 1
           }
