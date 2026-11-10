@@ -2,7 +2,7 @@
   "users": [
     {
       "name": "admin",
-      "password": "admin",
+      "password_hash": "QnvV0SxGel0/Mu27nKJ8SzTBlVn4jDHnvJDyFBCcP4geNjK7",
       "tags": ["administrator"]
     }
   ],
