@@ -24,7 +24,7 @@ services:
       - ../../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
       - ../../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_port_connectivity"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
