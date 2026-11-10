@@ -23,14 +23,12 @@ services:
     volumes:
       - ../../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
       - ../../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-    tmpfs:
-      - /var/lib/rabbitmq:uid=999,gid=999,mode=1770
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_port_connectivity"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 20s
 
   migration:
     build:
