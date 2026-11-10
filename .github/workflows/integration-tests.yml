@@ -42,14 +42,18 @@ jobs:
 
       - name: Start integration environment
         run: |
-          docker compose -f "$COMPOSE_FILE" up --build --detach
+          timeout 180s docker compose -f "$COMPOSE_FILE" up --build --detach || {
+            echo "Docker Compose failed or timed out."
+            docker compose -f "$COMPOSE_FILE" ps -a
+            docker compose -f "$COMPOSE_FILE" logs --no-color rabbitmq
+            exit 1
+          }
 
           for attempt in {1..60}; do
             if curl --fail --silent --output /dev/null http://localhost:5255/swagger/index.html; then
               echo "Integration API is ready."
               exit 0
             fi
-
             echo "Waiting for Integration API... ($attempt/60)"
             sleep 2
           done
