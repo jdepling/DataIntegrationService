@@ -30,11 +30,9 @@ The project demonstrates reliable, at-least-once message delivery while preventi
 
 ## Configuration
 
-Create a `.env` file in the solution root:
+Create a `.env` file in the solution root.
 
-```env
-SA_PASSWORD=YourStrongPassword123!
-```
+Copy contents from .env.example.
 
 These credentials are used by the Docker environment.
 
