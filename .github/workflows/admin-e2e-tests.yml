@@ -1,0 +1,75 @@
+
+name: Admin E2E Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  admin-e2e-tests:
+    name: Admin E2E Tests
+    runs-on: ubuntu-latest
+
+    env:
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+      E2E_AUTH0_USERNAME: ${{ secrets.E2E_AUTH0_USERNAME }}
+      E2E_AUTH0_PASSWORD: ${{ secrets.E2E_AUTH0_PASSWORD }}
+      AUTH0_ADMIN_CLIENT_SECRET: ${{ secrets.AUTH0_ADMIN_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Validate required secrets
+        run: |
+          for name in SA_PASSWORD E2E_AUTH0_USERNAME E2E_AUTH0_PASSWORD AUTH0_ADMIN_CLIENT_SECRET; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Create E2E environment file
+        run: |
+          cat > docker/test-environments/admin-e2e/.env <<EOF
+          SA_PASSWORD=${SA_PASSWORD}
+          E2E_AUTH0_USERNAME=${E2E_AUTH0_USERNAME}
+          E2E_AUTH0_PASSWORD=${E2E_AUTH0_PASSWORD}
+          AUTH0_ADMIN_CLIENT_SECRET=${AUTH0_ADMIN_CLIENT_SECRET}
+          EOF
+
+      - name: Restore dependencies
+        run: dotnet restore Tests/Integration.Admin.E2ETests/Integration.Admin.E2ETests.csproj
+
+      - name: Build E2E tests
+        run: dotnet build Tests/Integration.Admin.E2ETests/Integration.Admin.E2ETests.csproj --configuration Release --no-restore
+
+      - name: Run Selenium E2E tests
+        id: e2e-tests
+        run: dotnet test Tests/Integration.Admin.E2ETests/Integration.Admin.E2ETests.csproj --configuration Release --no-build --no-restore --logger "trx;LogFileName=Admin.E2ETests.trx" --results-directory TestResults
+
+      - name: Publish E2E Test Report
+        if: ${{ !cancelled() && steps.e2e-tests.outcome != 'skipped' }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Admin E2E Test Results
+          path: TestResults/*.trx
+          reporter: dotnet-trx
+          use-actions-summary: true
+          report-title: Admin E2E Test Results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-e2e-test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore
