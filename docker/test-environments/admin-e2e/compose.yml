@@ -21,8 +21,6 @@ services:
     volumes:
       - ../../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
       - ../../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-    tmpfs:
-      - /var/lib/rabbitmq:uid=999,gid=999,mode=1770
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
