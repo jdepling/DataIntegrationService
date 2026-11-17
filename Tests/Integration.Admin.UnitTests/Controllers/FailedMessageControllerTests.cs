@@ -2,7 +2,9 @@
 using Integration.Admin.Controllers;
 using Integration.Admin.Models;
 using Integration.Admin.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 
 namespace Integration.Admin.UnitTests.Controllers
@@ -15,7 +17,10 @@ namespace Integration.Admin.UnitTests.Controllers
         public FailedMessageControllerTests()
         {
             _adminApiClient = Substitute.For<IAdminApiClient>();
-            _controller = new FailedMessagesController(_adminApiClient);
+            _controller = new FailedMessagesController(_adminApiClient)
+            {
+                TempData = new TempDataDictionary(new DefaultHttpContext(), Substitute.For<ITempDataProvider>())
+            };
         }
 
         #region Details Tests
@@ -210,13 +215,15 @@ namespace Integration.Admin.UnitTests.Controllers
             // Assert
             var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
             redirectResult.ActionName.Should().Be(nameof(FailedMessagesController.Index));
+
+            _controller.TempData["SuccessMessage"].Should().Be("Message replayed successfully.");
         }
 
         /// <summary>
-        ///     Returns NotFound result when replay with fixed payload fails
+        ///     Returns error message and redirects to Index when replay with fixed payload fails
         /// </summary>
         [Fact]
-        public async Task ReplayFixed_ReplayFails_ReturnsNotFoundResult()
+        public async Task ReplayFixed_ReplayFails_ReturnsErrorMessageAndRedirectsToIndex()
         {
             // Arrange
             var messageId = Guid.NewGuid();
@@ -227,7 +234,10 @@ namespace Integration.Admin.UnitTests.Controllers
             var result = await _controller.ReplayFixed(messageId, payload);
 
             // Assert
-            result.Should().BeOfType<NotFoundResult>();
+            var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirectResult.ActionName.Should().Be(nameof(FailedMessagesController.Index));
+
+            _controller.TempData["ErrorMessage"].Should().Be("Unable to replay the message.");
         }
 
         /// <summary>
