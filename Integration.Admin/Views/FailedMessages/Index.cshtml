@@ -1,10 +1,16 @@
 ﻿@model List<Integration.Admin.Models.FailedMessageViewModel>
+@using Integration.Data
 
 @{
     ViewData["Title"] = "Failed Messages";
 }
 
-<h1>Failed Messages</h1>
+<div class="mb-4">
+    <h1 class="mb-1">Failed Messages</h1>
+    <p class="text-muted mb-0">
+        Monitor, investigate, and replay failed integration messages.
+    </p>
+</div>
 
 <table class="table">
     <thead>
@@ -21,10 +27,23 @@
         {
             <tr>
                 <td>@message.SourceId</td>
-                <td>@message.ErrorMessage</td>
-                <td>@message.FailureType</td>
-                <td>@message.CreatedAt.ToLocalTime()</td>
                 <td>
+                    <span class="error-message" title="@message.ErrorMessage">
+                        @message.ErrorMessage
+                    </span>
+                </td>
+                <td>
+                    @if (message.FailureType == FailureType.Transient)
+                    {
+                        <span class="badge bg-warning text-dark">Transient</span>
+                    }
+                    else if (message.FailureType == FailureType.Permanent)
+                    {
+                        <span class="badge bg-danger">Permanent</span>
+                    }
+                </td>
+                <td>@message.CreatedAt.ToLocalTime()</td>
+                <td class="text-nowrap">
                     <a asp-action="Details"
                        asp-route-id="@message.Id"
                        class="btn btn-secondary">

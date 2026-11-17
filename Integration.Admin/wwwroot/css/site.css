@@ -29,3 +29,16 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.table > tbody > tr:hover > * {
+    background-color: #f1f3f5 !important;
+}
+
+.error-message {
+    display: inline-block;
+    max-width: 450px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}

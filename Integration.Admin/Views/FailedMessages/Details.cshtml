@@ -1,11 +1,17 @@
 ﻿@model Integration.Admin.Models.FailedMessageViewModel
+@using Integration.Data
 
 @{
     ViewData["Title"] = "Failed Message Details";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Failed Message Details</h1>
+    <div>
+        <h1 class="mb-1">Failed Message Details</h1>
+        <p class="text-muted mb-0">
+            Investigate the failure and correct the payload before replaying.
+        </p>
+    </div>
 
     <a asp-action="Index" class="btn btn-secondary">
         Back to Failed Messages
@@ -20,13 +26,30 @@
     <div class="card-body">
         <dl class="row mb-0">
             <dt class="col-sm-3">Source ID</dt>
-            <dd id ="source-id" class="col-sm-9">@Model.SourceId</dd>
+            <dd id="source-id" class="col-sm-9">@Model.SourceId</dd>
 
             <dt class="col-sm-3">Failure Type</dt>
-            <dd class="col-sm-9">@Model.FailureType</dd>
+            <dd class="col-sm-9">
+                @if (Model.FailureType == FailureType.Transient)
+                {
+                    <span class="badge bg-warning text-dark">Transient</span>
+                }
+                else if (Model.FailureType == FailureType.Permanent)
+                {
+                    <span class="badge bg-danger">Permanent</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Unknown</span>
+                }
+            </dd>
 
             <dt class="col-sm-3">Error</dt>
-            <dd class="col-sm-9">@Model.ErrorMessage</dd>
+            <dd class="col-sm-9">
+                <div class="alert alert-light border text-break mb-0">
+                    @Model.ErrorMessage
+                </div>
+            </dd>
 
             <dt class="col-sm-3">Created</dt>
             <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime()</dd>
@@ -51,8 +74,14 @@
             <input type="hidden" name="id" value="@Model.Id" />
 
             <div class="mb-3">
-                <textarea class="form-control font-monospace"
-                          rows="20"
+                <label for="payload" class="form-label fw-semibold">
+                    JSON Payload
+                </label>
+
+                <textarea id="payload"
+                          class="form-control font-monospace"
+                          rows="10"
+                          spellcheck="false"
                           name="payload">@Model.Payload</textarea>
             </div>
 
