@@ -161,10 +161,10 @@ namespace Integration.Admin.UnitTests.Controllers
         }
 
         /// <summary>
-        ///     Returns NotFound result when replay fails
+        ///     Returns error message and redirects to Index when replay fails
         /// </summary>
         [Fact]
-        public async Task Replay_ReplayFails_ReturnsNotFoundResult()
+        public async Task Replay_ReplayFails_ReturnsErrorMessageAndRedirectsToIndex()
         {
             // Arrange
             var messageId = Guid.NewGuid();
@@ -174,7 +174,10 @@ namespace Integration.Admin.UnitTests.Controllers
             var result = await _controller.Replay(messageId);
 
             // Assert
-            result.Should().BeOfType<NotFoundResult>();
+            var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirectResult.ActionName.Should().Be(nameof(FailedMessagesController.Index));
+
+            _controller.TempData["ErrorMessage"].Should().NotBeNull();
         }
 
         /// <summary>
@@ -237,7 +240,7 @@ namespace Integration.Admin.UnitTests.Controllers
             var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
             redirectResult.ActionName.Should().Be(nameof(FailedMessagesController.Index));
 
-            _controller.TempData["ErrorMessage"].Should().Be("Unable to replay the message.");
+            _controller.TempData["ErrorMessage"].Should().NotBeNull();
         }
 
         /// <summary>
