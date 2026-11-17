@@ -41,7 +41,7 @@ namespace Integration.Admin.Controllers
         }
 
         /// <summary>
-        ///   Replays a failed message by its ID. If the replay is successful, it redirects to the index page; otherwise, it returns a NotFound result.
+        ///   Replays a failed message by its ID. Displays a success or error message and then redirects to the index page.
         /// </summary>
         /// <param name="id">The ID of the failed message to replay.</param>
         [HttpPost]
@@ -50,25 +50,32 @@ namespace Integration.Admin.Controllers
             var success = await _adminApiClient.ReplayMessageAsync(id);
 
             if (!success)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Unable to replay the message. It may no longer exist.";
+                return RedirectToAction(nameof(Index));
+            }
 
+            TempData["SuccessMessage"] = "Message replayed successfully.";
             return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
-        ///  Replays a failed message by its ID with a fixed payload. If the replay is successful, it redirects to the index page; otherwise, it returns a NotFound result.
+        ///     Replays a failed message by its ID with a fixed payload. It displays a success or error message and then redirects to the index page.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="payload"></param>
-        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> ReplayFixed(Guid id, string payload)
         {
             var success = await _adminApiClient.ReplayFixedMessageAsync(id, payload);
 
             if (!success)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Unable to replay the message. It may no longer exist.";
+                return RedirectToAction(nameof(Index));
+            }
 
+            TempData["SuccessMessage"] = "Message replayed successfully.";
             return RedirectToAction(nameof(Index));
         }
     }
